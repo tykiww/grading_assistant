@@ -96,8 +96,9 @@ Do not hallucinate.
 Do not bring outside knowledge.
 Provide a point score (out of {total_points}) and concise justification for the score.
 Format your response as:
+Assessment: [explanation]
 Score: [number]
-Justification [explanation]
+
 
 # Guidance
 Grading Guidance: {grading_guidance}
@@ -151,8 +152,8 @@ def query_openai(prompt, api_key):
 # Clean Output
 def clean_output(response):
     # Split by the Score: and Justification: markers
-    score_part = response.split('Score:')[1].split('Justification:')[0].strip()
-    justification_part = response.split('Justification:')[1].strip()
+    justification_part = response.split('Assessment:')[1].split('Score:')[0].strip()
+    score_part = response.split('Score:')[1].strip()
     
     # Extract score and justification
     score = float(score_part)
@@ -168,8 +169,6 @@ def grade_submission(student_response, answer_key, api_key):
     for _, row in answer_key.iterrows():
 
         # match answer key to student answer.
-        print(row['Question #'])
-        print(student_response)
         response, points = match_answers(row['Question #'], student_response)
 
         # Prepare prompt
@@ -197,7 +196,7 @@ def grade_submission(student_response, answer_key, api_key):
                 'q_num': row['Question #'],
                 'old_score': points,
                 'new_score': new_score,
-                'justification': justification,
+                'assessment': justification,
                 'context': row['Context'],
                 'question': row['Question'],
                 'answer': response,
@@ -321,7 +320,12 @@ with tab1:
             st.write("### Student Submissions Preview:")
             student_submissions = pd.read_csv(submissions_file) # submissions_file = 'data/student_answers.csv'
             student_submissions = clean_grading_file(student_submissions)
-            st.dataframe(student_submissions.head())
+
+            if "name" in student_submissions.columns:
+                temp = student_submissions.drop(["name"],axis=1).head()
+                st.dataframe(temp)
+            else:
+                st.dataframe(student_submissions.head())
 
         # Upload answer key
         answer_key_file = st.file_uploader(
@@ -336,20 +340,27 @@ with tab1:
 
         # Start grading process
         if submissions_file and answer_key_file:
+
+            max_rows = len(student_submissions)
+            data_length = st.number_input("For Testing: Enter a number to truncate your student file", min_value=1, max_value=max_rows, value=max_rows)
+
             if st.button("Start Grading"):
                 st.session_state["grading_started"] = True
                 st.write("🚧 Grading in progress...")
                 
+                # Truncate data for testing
+                truncated_data = student_submissions[0:data_length] 
+
                 # Progress bar, status, and timer
                 progress_bar = st.progress(0)
                 status_text = st.empty()
                 time_text = st.empty()
-                total = len(student_submissions)
+                total = len(truncated_data)
                 start_time = time.time()
 
                 # Process each submission
                 results = []
-                for i, submission in student_submissions.iterrows():
+                for i, submission in truncated_data.iterrows():
 
                     # Actual work (call your grading function)
                     student_grades = grade_submission(submission, answer_key, openai_api_key)
@@ -398,7 +409,7 @@ with tab2:
                 "Question #": st.column_config.NumberColumn("Question #", min_value=0),
                 "Old Score ": st.column_config.NumberColumn("Old Score", min_value=0),
                 "New Score": st.column_config.NumberColumn("New Score", min_value=0),
-                "Justification": st.column_config.TextColumn("Justification"),
+                "Assessment": st.column_config.TextColumn("Assessment"),
                 "Context": st.column_config.TextColumn("Context"),
                 "Question": st.column_config.TextColumn("Question"),
                 "Student Answer": st.column_config.TextColumn("Student Answer"), 
@@ -423,7 +434,7 @@ with tab3:
     st.write("Enter the details for each question below, then download or submit the answer key.")
 
     # Input form with proper state management
-    with st.form("Add Q&A Form", clear_on_submit=True):  # Add clear_on_submit=True
+    with st.form("Add Q&A Form", clear_on_submit=True):
         st.text_input("Question #", key='q_number_input')
         st.text_area("Context for Essay Question", key='context_input')
         st.text_area("Question", key='question_input')
