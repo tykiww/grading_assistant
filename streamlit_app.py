@@ -101,7 +101,9 @@ Be exact in your point allocation.
 
 Format your score response as:
 Assessment: [justification with point scores]
-Score: [final number]
+Score: [initial number]
+Reassessment of reason and score: [re-evaluation]
+Revised Score: [final number]
 
 
 # Guidance
@@ -156,8 +158,8 @@ def query_openai(prompt, api_key):
 # Clean Output
 def clean_output(response):
     # Split by the Score: and Justification: markers
-    justification_part = response.split('Assessment:')[1].split('Score:')[0].strip()
-    score_part = response.split('Score:')[1].strip()
+    justification_part = response.split('Assessment:')[1].split('Revised Score:')[0].strip()
+    score_part = response.split('Revised Score:')[1].strip()
     
     # Extract score and justification
     score = float(score_part)
