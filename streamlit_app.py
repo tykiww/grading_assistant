@@ -95,9 +95,13 @@ def setup_grading_query(student_answer, question, context, exemplar_answer, grad
 Do not hallucinate.
 Do not bring outside knowledge.
 Provide a point score (out of {total_points}) and concise justification for the score.
-Format your response as:
-Assessment: [explanation]
-Score: [number]
+Find every reason to give points rather than to remove poiints.
+Make sure that your final score is only a number.
+Be exact in your point allocation.
+
+Format your score response as:
+Assessment: [justification with point scores]
+Score: [final number]
 
 
 # Guidance
