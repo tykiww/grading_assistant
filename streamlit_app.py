@@ -198,6 +198,7 @@ def grade_submission(student_response, answer_key, api_key):
         if grading_response:
 
             output = {
+                'student_name': student_response['name'],
                 'student_id': student_response['id'],
                 'q_num': row['Question #'],
                 'old_score': points,
@@ -408,10 +409,13 @@ with tab2:
             fig_boxplots = build_boxplots(data)      
             st.plotly_chart(fig_boxplots)
 
+            st.write("Old grades will be 0 if scores were never included from canvas.")
+
             st.write("### Grading Breakdown")
 
             column_configuration = {
-                "Student ID": st.column_config.TextColumn("Student ID"),
+                "Student Name": st.column_config.TextColumn("Student Name"),
+                "Student ID": st.column_config.NumberColumn("Student ID"),
                 "Question #": st.column_config.NumberColumn("Question #", min_value=0),
                 "Old Score ": st.column_config.NumberColumn("Old Score", min_value=0),
                 "New Score": st.column_config.NumberColumn("New Score", min_value=0),
